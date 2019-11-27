@@ -1,5 +1,5 @@
 // It might be a good idea to add event listener to make sure this file
-// only runs after the DOM has finshed loading.
+// only runs after the DOM has finished loading.
 
 //api
 const apiHeaders = {
@@ -38,22 +38,42 @@ const API = { get, post, deleteRequest, patch };
 
 //const
 const QUOTES_WITH_LIKES_URL = "http://localhost:3000/quotes?_embed=likes";
+const QUOTES_WITH_LIKES_SORTED_AUTHORS_URL =
+  "http://localhost:3000/quotes?_sort=author&_embed=likes";
 const QUOTES_URL = "http://localhost:3000/quotes/";
 const LIKES_URL = "http://localhost:3000/likes";
 const quoteList = document.querySelector("#quote-list");
 const newQuoteForm = document.querySelector("#new-quote-form");
 const editQuoteForm = document.querySelector("#edit-quote-form");
+const sortButton = document.querySelector("#sort-button");
 
-//functions
+//event listeners
+const activateSubmit = newQuoteForm.addEventListener("submit", e =>
+  addQuote(e)
+);
+const activateEdit = editQuoteForm.addEventListener(
+  "submit",
+  () => submitEditQuote
+);
+const activateSort = sortButton.addEventListener("click", e => sortAuthors(e));
+
 document.addEventListener("DOMContentLoaded", function() {
   getAllQuotes();
   activateSubmit;
   activateEdit;
+  activateSort;
   editQuoteForm.className = "hidden";
 });
 
+//functions
 const getAllQuotes = () => {
   API.get(QUOTES_WITH_LIKES_URL).then(quotes =>
+    quotes.forEach(quote => displayQuote(quote))
+  );
+};
+
+const getAllSortedQuotes = () => {
+  API.get(QUOTES_WITH_LIKES_SORTED_AUTHORS_URL).then(quotes =>
     quotes.forEach(quote => displayQuote(quote))
   );
 };
@@ -98,14 +118,6 @@ const displayQuote = quote => {
   li.append(blockquote);
   quoteList.append(li);
 };
-
-const activateSubmit = newQuoteForm.addEventListener("submit", e =>
-  addQuote(e)
-);
-
-const activateEdit = editQuoteForm.addEventListener("submit", e =>
-  submitEditQuote(e)
-);
 
 const addQuote = e => {
   e.preventDefault();
@@ -181,8 +193,7 @@ const updateEditQuoteForm = (quote, editQuote, editAuthor) => {
   editAuthor.value = quote.author;
 };
 
-const submitEditQuote = e => {
-  e.preventDefault();
+const submitEditQuote = () => {
   const quoteId = e.target.className;
   const editedPostData = {
     quote: editQuoteForm["edit-quote"].value,
@@ -197,4 +208,24 @@ const updateQuote = editedQuote => {
   const quoteAuthorToEdit = quoteToEdit.querySelector("footer");
   quoteQuoteToEdit.innerText = editedQuote.quote;
   quoteAuthorToEdit.innerText = editedQuote.author;
+};
+
+const sortAuthors = e => {
+  if (sortButton.className === "sorted") {
+    sortButton.innerText = "Sort by author name: OFF. Click to turn on.";
+    sortButton.classList.remove("sorted");
+    while (quoteList.firstChild) {
+      quoteList.firstChild.remove();
+    }
+    getAllQuotes();
+    // console.log("this unsorts");
+  } else {
+    while (quoteList.firstChild) {
+      quoteList.firstChild.remove();
+    }
+    getAllSortedQuotes();
+    sortButton.innerText = "Sort by author name: ON. Click to turn off.";
+    sortButton.className = "sorted";
+    // console.log("this path sorts!");
+  }
 };
